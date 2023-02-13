@@ -25,6 +25,7 @@ func New(l *lexer.Lexer) *Parser {
 	return p
 }
 
+// Program 노드(모든 AST의 루트 노드) 반환
 func (p *Parser) ParseProgram() *ast.Program {
 	program := &ast.Program{} // AST의 루트 노드 생성
 	program.Statements = []ast.Statement{}
@@ -49,6 +50,8 @@ func (p *Parser) parseStatement() ast.Statement {
 	switch p.curToken.Type {
 	case token.LET:
 		return p.parseLetStatement()
+	case token.RETURN:
+		return p.parseReturnStatement()
 	default:
 		return nil
 	}
@@ -68,6 +71,20 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 	if !p.expectPeek(token.ASSIGN) {
 		return nil
 	}
+
+	// 세미콜론을 만날 때까지 표현식 건너뜀
+	for !p.curTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	}
+
+	return stmt
+}
+
+func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
+	stmt := &ast.ReturnStatement{Token: p.curToken}
+
+	// 파서를 다음에 올 표현식이 있는 곳에 위치시킴
+	p.nextToken()
 
 	// 세미콜론을 만날 때까지 표현식 건너뜀
 	for !p.curTokenIs(token.SEMICOLON) {
