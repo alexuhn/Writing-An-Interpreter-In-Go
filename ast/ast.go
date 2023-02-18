@@ -107,6 +107,26 @@ func (il *IntegerLiteral) expressionNode()      {}
 func (il *IntegerLiteral) TokenLiteral() string { return il.Token.Literal }
 func (il *IntegerLiteral) String() string       { return il.Token.Literal }
 
+type PrefixExpression struct {
+	Token    token.Token // !, - 등의 전위 연산자 토큰
+	Operator string      // "!", "-" 등의 문자열
+	Right    Expression  // 연산자의 오른쪽에 나오는 표현식
+}
+
+func (pe *PrefixExpression) expressionNode()      {}
+func (pe *PrefixExpression) TokenLiteral() string { return pe.Token.Literal }
+func (pe *PrefixExpression) String() string {
+	var out bytes.Buffer
+
+	// 특정 피연산자가 속한 연산자를 알기 위해 괄호 포함
+	out.WriteString("(")
+	out.WriteString(pe.Operator)
+	out.WriteString(pe.Right.String())
+	out.WriteString(")")
+
+	return out.String()
+}
+
 func (p *Program) String() string {
 	var out bytes.Buffer
 
