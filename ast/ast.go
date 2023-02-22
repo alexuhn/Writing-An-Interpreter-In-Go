@@ -127,6 +127,28 @@ func (pe *PrefixExpression) String() string {
 	return out.String()
 }
 
+type InfixExpression struct {
+	Token    token.Token // +, - 등의 중위 연산자 토큰
+	Left     Expression  // 연산자의 왼쪽에 나오는 표현식
+	Operator string      // "+", "-" 등의 문자열
+	Right    Expression  // 연산자의 오른쪽에 나오는 표현식
+}
+
+func (ie *InfixExpression) expressionNode()      {}
+func (ie *InfixExpression) TokenLiteral() string { return ie.Token.Literal }
+func (ie *InfixExpression) String() string {
+	var out bytes.Buffer
+
+	// 특정 피연산자가 속한 연산자를 알기 위해 괄호 포함
+	out.WriteString("(")
+	out.WriteString(ie.Left.String())
+	out.WriteString(" " + ie.Operator + " ")
+	out.WriteString(ie.Right.String())
+	out.WriteString(")")
+
+	return out.String()
+}
+
 func (p *Program) String() string {
 	var out bytes.Buffer
 
