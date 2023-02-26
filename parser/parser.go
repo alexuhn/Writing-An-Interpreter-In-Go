@@ -145,10 +145,10 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 		Expression: p.parseExpression(LOWEST),
 	}
 
-	for !p.curTokenIs(token.SEMICOLON) {
+	// 선택적으로 들어오는 세미콜론 검사
+	if p.peekTokenIs(token.SEMICOLON) {
 		// curToken이 token.SEMICOLON이 되도록 nextToken 호출
 		p.nextToken()
-
 		// 세미콜론은 optional이기 때문에 없어도 에러 추가 없음
 	}
 
