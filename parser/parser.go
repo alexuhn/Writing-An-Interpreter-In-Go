@@ -140,6 +140,8 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 }
 
 func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
+	defer untrace(trace("parseExpressionStatement"))
+
 	stmt := &ast.ExpressionStatement{
 		Token:      p.curToken,
 		Expression: p.parseExpression(LOWEST),
@@ -157,6 +159,8 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 
 // 전위 표현식 파싱
 func (p *Parser) parsePrefixExpression() ast.Expression {
+	defer untrace(trace("parsePrefixExpression"))
+
 	expression := &ast.PrefixExpression{
 		Token:    p.curToken,
 		Operator: p.curToken.Literal,
@@ -170,6 +174,8 @@ func (p *Parser) parsePrefixExpression() ast.Expression {
 
 // 중위 표현식 파싱
 func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
+	defer untrace(trace("parseInfixExpression"))
+
 	expression := &ast.InfixExpression{
 		Token:    p.curToken,
 		Operator: p.curToken.Literal,
@@ -183,7 +189,10 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 	return expression
 }
 
+// precedence 인수: p.curToken의 오른쪽으로 묶이는 힘(right-binding power, RBP)
 func (p *Parser) parseExpression(precedence int) ast.Expression {
+	defer untrace(trace("parseExpression"))
+
 	// 전위로 연관된 파싱 함수가 있는지 검사
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
@@ -192,6 +201,8 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	}
 	leftExp := prefix()
 
+	// p.peekPrecedence(): p.peekToken의 왼쪽으로 묶이는 힘(left-binding power, LBP)
+	// RBP < LBP인 경우 curToken이 다음 토큰의 Left 노드가 된다.
 	for !p.peekTokenIs(token.SEMICOLON) && precedence < p.peekPrecedence() {
 		infix := p.infixParseFns[p.peekToken.Type]
 		if infix == nil {
@@ -216,6 +227,8 @@ func (p *Parser) parseIdentifier() ast.Expression {
 
 // 정수 리터럴 파싱 함수
 func (p *Parser) parseIntegerLiteral() ast.Expression {
+	defer untrace(trace("parseIntegerLiteral"))
+
 	value, err := strconv.ParseInt(p.curToken.Literal, 0, 64)
 	if err != nil {
 		msg := fmt.Sprintf("could not parse %q as integer", p.curToken.Literal)
