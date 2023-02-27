@@ -62,6 +62,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.TRUE, p.parseBoolean)
 	p.registerPrefix(token.FALSE, p.parseBoolean)
 	p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
+	p.registerPrefix(token.IF, p.parseIfExpression)
 
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfix(token.PLUS, p.parseInfixExpression)
@@ -262,6 +263,59 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 		return nil
 	}
 	return exp
+}
+
+func (p *Parser) parseIfExpression() ast.Expression {
+	expression := &ast.IfExpression{Token: p.curToken}
+
+	// expectPeek를 사용하여 기대한 타입이 나올 경우 curToken과 peekToken을 옮김
+	// 즉 여는 괄호가 나오는 경우 여는 괄호로 이동
+	if !p.expectPeek(token.LPAREN) {
+		return nil
+	}
+	p.nextToken()
+	expression.Condition = p.parseExpression(LOWEST)
+
+	// 닫는 괄호가 나오는 경우 닫는 괄호로 이동
+	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
+	// 중괄호가 나오는 경우 중괄호로 이동
+	if !p.expectPeek(token.LBRACE) {
+		return nil
+	}
+	expression.Consequence = p.parseBlockStatement()
+
+	// 현재 닫는 괄호를 보고 있으며, 다음 토큰이 ELSE인지 확인
+	if p.peekTokenIs(token.ELSE) {
+		// 다음 토큰이 ELSE인 경우 ELSE로 이동
+		p.nextToken()
+
+		// 다음 토큰이 중괄호인 경우 중괄호로 이동
+		if !p.expectPeek(token.LBRACE) {
+			return nil
+		}
+		expression.Alternative = p.parseBlockStatement()
+	}
+
+	return expression
+}
+
+func (p *Parser) parseBlockStatement() *ast.BlockStatement {
+	block := &ast.BlockStatement{Token: p.curToken}
+	block.Statements = []ast.Statement{}
+
+	// parseBlockStatement은 호출 시점에 중괄호를 보고 있음
+	p.nextToken()
+
+	// token.EOF가 나오는 경우 더는 파싱할 토큰이 없다는 말이므로 parseStatement 호출 필요 없음
+	for !p.curTokenIs(token.RBRACE) && !p.curTokenIs(token.EOF) {
+		stmt := p.parseStatement()
+		block.Statements = append(block.Statements, stmt)
+		p.nextToken()
+	}
+
+	return block
 }
 
 func (p *Parser) nextToken() {
