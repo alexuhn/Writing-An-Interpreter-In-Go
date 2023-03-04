@@ -29,6 +29,7 @@ var precedences = map[token.TokenType]int{
 	token.MINUS:    SUM,
 	token.SLASH:    PRODUCT,
 	token.ASTERISK: PRODUCT,
+	token.LPAREN:   CALL, // 호출 표현식은 가장 높은 우선순위를 가짐
 }
 
 type (
@@ -36,6 +37,8 @@ type (
 	infixParseFn  func(ast.Expression) ast.Expression
 )
 
+// 파서는 소스코드를 표현하는 자료구조를 구축하는 동안 입력을 분석(예상 구조에 맞는지 검사)할 수밖에 없다.
+// 따라서 파싱 프로세스를 구문 분석(syntatic analysis)라고도 한다.
 type Parser struct {
 	l      *lexer.Lexer
 	errors []string
@@ -74,6 +77,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.NOT_EQ, p.parseInfixExpression)
 	p.registerInfix(token.LT, p.parseInfixExpression)
 	p.registerInfix(token.GT, p.parseInfixExpression)
+	p.registerInfix(token.LPAREN, p.parseCallExpression)
 
 	return p
 }
@@ -360,6 +364,36 @@ func (p *Parser) parseFunctionParameters() []*ast.Identifier {
 		return nil
 	}
 	return identifiers
+}
+
+func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
+	return &ast.CallExpression{
+		Token:     p.curToken,
+		Function:  function,
+		Arguments: p.parseCallArguments(),
+	}
+}
+
+func (p *Parser) parseCallArguments() []ast.Expression {
+	args := []ast.Expression{}
+
+	if p.peekTokenIs(token.RPAREN) {
+		p.nextToken()
+		return args
+	}
+
+	p.nextToken()
+	args = append(args, p.parseExpression(LOWEST))
+	for p.peekTokenIs(token.COMMA) {
+		p.nextToken()
+		p.nextToken()
+		args = append(args, p.parseExpression(LOWEST))
+	}
+
+	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
+	return args
 }
 
 func (p *Parser) nextToken() {

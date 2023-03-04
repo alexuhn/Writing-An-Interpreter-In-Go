@@ -2,6 +2,8 @@ package lexer
 
 import "monkey/token"
 
+// 어휘 분석(lexical analysis or just lexing): 소스코드를 토큰 열로 변환하는 작업
+// 렉서(lexer): 어휘 분석을 실행하는 도구
 type Lexer struct {
 	input        string
 	position     int  // 입력에서 현재 위치 즉, 현재 문자를 가리킴
