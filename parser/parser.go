@@ -125,12 +125,13 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 	if !p.expectPeek(token.ASSIGN) {
 		return nil
 	}
+	p.nextToken()
 
-	// 세미콜론을 만날 때까지 표현식 건너뜀
-	for !p.curTokenIs(token.SEMICOLON) {
+	stmt.Value = p.parseExpression(LOWEST)
+
+	if p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}
-
 	return stmt
 }
 
@@ -140,11 +141,11 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 	// 파서를 다음에 올 표현식이 있는 곳에 위치시킴
 	p.nextToken()
 
-	// 세미콜론을 만날 때까지 표현식 건너뜀
-	for !p.curTokenIs(token.SEMICOLON) {
+	stmt.ReturnValue = p.parseExpression(LOWEST)
+
+	if p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}
-
 	return stmt
 }
 
