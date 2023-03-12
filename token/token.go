@@ -46,6 +46,9 @@ const (
 	IF       = "IF"
 	ELSE     = "ELSE"
 	RETURN   = "RETURN"
+
+	// 자료구조
+	STRING = "STRING"
 )
 
 var keywords = map[string]TokenType{

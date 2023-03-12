@@ -75,6 +75,8 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 			return args[0]
 		}
 		return applyApplication(function, args)
+	case *ast.StringLiteral:
+		return &object.String{Value: node.Value}
 	}
 	return nil
 }
@@ -148,6 +150,8 @@ func evalInfixExpression(operator string, left object.Object, right object.Objec
 		// 정수는 *object.Integer 객체를 만들 때 언제나 새로운 인스턴스를 할당하기 때문에
 		// 새로운 포인터를 갖게되므로, 포인터를 비교하지 않고 내부 값을 풀어내어(unwrap) 비교
 		return evalIntegerInfixExpression(operator, left, right)
+	case left.Type() == object.STRING_OBJ && right.Type() == object.STRING_OBJ:
+		return evalStringInfixExpression(operator, left, right)
 	case operator == "==":
 		// Boolean 객체에는 TRUE, FALSE만 존재하기 때문에 포인터 비교 가능
 		return nativeBoolToBooleanObject(left == right)
@@ -184,6 +188,15 @@ func evalIntegerInfixExpression(operator string, left object.Object, right objec
 	default:
 		return newError("unknown operator: %s %s %s", left.Type(), operator, right.Type())
 	}
+}
+
+func evalStringInfixExpression(operator string, left object.Object, right object.Object) object.Object {
+	if operator != "+" {
+		return newError("unknown operator: %s %s %s", left.Type(), operator, right.Type())
+	}
+	leftVal := left.(*object.String).Value
+	rightVal := right.(*object.String).Value
+	return &object.String{Value: leftVal + rightVal}
 }
 
 func evalBangOperatorExpression(right object.Object) object.Object {
